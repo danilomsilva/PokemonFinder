@@ -1,112 +1,90 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
-
 import React from 'react';
-import type {Node} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {Image, StyleSheet, StatusBar} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import Pokedex from './App/screens/Pokedex';
+import CatchPokemon from './App/screens/CatchPokemon';
+import {NavigationContainer} from '@react-navigation/native';
+import Mascot from './App/screens/Mascot';
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
+const Tab = createBottomTabNavigator();
+
+const App = () => {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
-
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+    <>
+      <StatusBar barStyle="dark-content" />
+      <NavigationContainer>
+        <Tab.Navigator
+          initialRouteName="CatchPokemon" // temporary
+          screenOptions={{
+            tabBarActiveBackgroundColor: '#f5f5f5',
+            tabBarHideOnKeyboard: true,
+            tabBarLabelStyle: {
+              color: '#000',
+            },
+            headerStyle: {
+              backgroundColor: '#f5f5f5',
+            },
+            headerTitleAlign: 'center',
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          <Tab.Screen
+            name="Pokedex"
+            component={Pokedex}
+            options={{
+              title: 'Pokedex',
+              tabBarIcon: () => (
+                <Image
+                  style={styles.tabIcon}
+                  source={require('./App/assets/images/pokedex.png')}
+                />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Mascot"
+            component={Mascot}
+            options={{
+              title: 'Mascot',
+              tabBarIcon: () => (
+                <Image
+                  style={styles.tabIcon}
+                  source={require('./App/assets/images/mascot.png')}
+                />
+              ),
+            }}
+          />
+
+          <Tab.Screen
+            name="CatchPokemon"
+            component={CatchPokemon}
+            options={{
+              title: 'Catch a new Pokemon',
+              tabBarLabel: 'Catch!',
+              tabBarIcon: () => (
+                <Image
+                  style={styles.tabIcon}
+                  source={require('./App/assets/images/catch.png')}
+                />
+              ),
+            }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabIcon: {
+    width: 30,
+    height: 30,
+  },
+});
