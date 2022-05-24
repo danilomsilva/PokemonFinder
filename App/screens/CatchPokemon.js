@@ -14,7 +14,9 @@ import {
   useCameraDevices,
 } from 'react-native-vision-camera';
 
-import RNLocation from 'react-native-location';
+import Map from './Map';
+
+// import RNLocation from 'react-native-location';
 
 const CatchPokemon = props => {
   const [pokemonName, setPokemonName] = useState('');
@@ -39,44 +41,44 @@ const CatchPokemon = props => {
     await CameraComponent.requestCameraPermission();
   };
 
-  const permissionHandle = async () => {
-    let permission = await RNLocation.checkPermission({
-      ios: 'whenInUse',
-      android: {
-        detail: 'coarse',
-      },
-    });
-    permission = await RNLocation.requestPermission({
-      ios: 'whenInUse',
-      android: {
-        detail: 'coarse',
-        rationale: {
-          title: 'Title 1',
-          message: 'Message 1',
-          buttonPositive: 'Ok 1',
-          buttonNegative: 'Cancel 1',
-        },
-      },
-    });
+  // const permissionHandle = async () => {
+  //   let permission = await RNLocation.checkPermission({
+  //     ios: 'whenInUse',
+  //     android: {
+  //       detail: 'coarse',
+  //     },
+  //   });
+  //   permission = await RNLocation.requestPermission({
+  //     ios: 'whenInUse',
+  //     android: {
+  //       detail: 'coarse',
+  //       rationale: {
+  //         title: 'Title 1',
+  //         message: 'Message 1',
+  //         buttonPositive: 'Ok 1',
+  //         buttonNegative: 'Cancel 1',
+  //       },
+  //     },
+  //   });
 
-    if (!permission) {
-      permission = await RNLocation.requestPermission({
-        ios: 'whenInUse',
-        android: {
-          detail: 'coarse',
-          rationale: {
-            title: 'Title 2',
-            message: 'Message 2',
-            buttonPositive: 'OK 2',
-            buttonNegative: 'Cancel 2',
-          },
-        },
-      });
-      setLocation(await RNLocation.getLatestLocation({timeout: 100}));
-    } else {
-      setLocation(await RNLocation.getLatestLocation({timeout: 100}));
-    }
-  };
+  //   if (!permission) {
+  //     permission = await RNLocation.requestPermission({
+  //       ios: 'whenInUse',
+  //       android: {
+  //         detail: 'coarse',
+  //         rationale: {
+  //           title: 'Title 2',
+  //           message: 'Message 2',
+  //           buttonPositive: 'OK 2',
+  //           buttonNegative: 'Cancel 2',
+  //         },
+  //       },
+  //     });
+  //     setLocation(await RNLocation.getLatestLocation({timeout: 100}));
+  //   } else {
+  //     setLocation(await RNLocation.getLatestLocation({timeout: 100}));
+  //   }
+  // };
 
   useEffect(() => {
     getCameraPermission();
@@ -171,10 +173,14 @@ const CatchPokemon = props => {
       </View>
 
       <View style={styles.geolocation}>
-        <Button title="Get Location" onPress={() => permissionHandle()} />
+        <Button
+          title="Get Location"
+          // onPress={() => permissionHandle()}
+        />
         <Text>Latitude: {location?.latitude}</Text>
         <Text>Longitude: {location?.longitude}</Text>
       </View>
+      <Map />
     </ScrollView>
   );
 };

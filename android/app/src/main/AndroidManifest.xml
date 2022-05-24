@@ -32,6 +32,6 @@
    <!-- You will only need to add this meta-data tag, but make sure it's a child of application -->
    <meta-data
      android:name="com.google.android.geo.API_KEY"
-     android:value="AIzaSyDAP_FL5qyvrliwzDc-_XUM5MMkJ0dYZv0"/>
+     android:value="AIzaSyCKfbwmL6M4hht0oIoaRjU5UoE-cZB_MnU"/>
 </application>
 </manifest>
