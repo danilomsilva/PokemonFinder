@@ -7,20 +7,21 @@ import {
   TextInput,
   Image,
   Pressable,
+  Button,
 } from 'react-native';
 import {
   Camera as CameraComponent,
   useCameraDevices,
-  TakePhotoOptions,
-  TakeSnapshotOptions,
 } from 'react-native-vision-camera';
+
+import RNLocation from 'react-native-location';
 
 const CatchPokemon = props => {
   const [pokemonName, setPokemonName] = useState('');
   const [camView, setCamView] = useState('front');
-  const [loading, setLoading] = useState(false);
+
   const [image, setImage] = useState(null);
-  console.log(image);
+  const [location, setLocation] = useState(null);
 
   const devices = useCameraDevices();
   const device = camView === 'back' ? devices.back : devices.front;
@@ -38,6 +39,45 @@ const CatchPokemon = props => {
     await CameraComponent.requestCameraPermission();
   };
 
+  const permissionHandle = async () => {
+    let permission = await RNLocation.checkPermission({
+      ios: 'whenInUse',
+      android: {
+        detail: 'coarse',
+      },
+    });
+    permission = await RNLocation.requestPermission({
+      ios: 'whenInUse',
+      android: {
+        detail: 'coarse',
+        rationale: {
+          title: 'Title 1',
+          message: 'Message 1',
+          buttonPositive: 'Ok 1',
+          buttonNegative: 'Cancel 1',
+        },
+      },
+    });
+
+    if (!permission) {
+      permission = await RNLocation.requestPermission({
+        ios: 'whenInUse',
+        android: {
+          detail: 'coarse',
+          rationale: {
+            title: 'Title 2',
+            message: 'Message 2',
+            buttonPositive: 'OK 2',
+            buttonNegative: 'Cancel 2',
+          },
+        },
+      });
+      setLocation(await RNLocation.getLatestLocation({timeout: 100}));
+    } else {
+      setLocation(await RNLocation.getLatestLocation({timeout: 100}));
+    }
+  };
+
   useEffect(() => {
     getCameraPermission();
   }, []);
@@ -47,19 +87,15 @@ const CatchPokemon = props => {
   };
 
   const takePhoto = async () => {
-    setLoading(true);
     try {
       if (cameraRef.current == null) {
-        console.log('erro taking photo');
+        console.log('Error taking photo');
       }
-      console.log('Photo taking ....');
       const photo = await cameraRef.current.takePhoto(takePhotoOptions);
-      console.log(photo);
       setImage(photo.path);
     } catch (error) {
       console.log(error);
     }
-    setLoading(false);
   };
 
   return (
@@ -132,6 +168,12 @@ const CatchPokemon = props => {
             </View>
           </>
         )}
+      </View>
+
+      <View style={styles.geolocation}>
+        <Button title="Get Location" onPress={() => permissionHandle()} />
+        <Text>Latitude: {location?.latitude}</Text>
+        <Text>Longitude: {location?.longitude}</Text>
       </View>
     </ScrollView>
   );
@@ -217,5 +259,10 @@ const styles = StyleSheet.create({
   switchBtn: {
     width: 40,
     height: 40,
+  },
+  geolocation: {
+    marginTop: 20,
+    marginHorizontal: 50,
+    marginBottom: 20,
   },
 });
