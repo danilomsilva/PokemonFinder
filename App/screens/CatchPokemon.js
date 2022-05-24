@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -6,26 +6,60 @@ import {
   ScrollView,
   TextInput,
   Image,
+  Pressable,
 } from 'react-native';
-import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import {
+  Camera as CameraComponent,
+  useCameraDevices,
+  TakePhotoOptions,
+  TakeSnapshotOptions,
+} from 'react-native-vision-camera';
 
 const CatchPokemon = props => {
   const [pokemonName, setPokemonName] = useState('');
+  const [camView, setCamView] = useState('front');
+  const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
+  console.log(image);
 
   const devices = useCameraDevices();
-  const device = devices.front;
+  const device = camView === 'back' ? devices.back : devices.front;
+  const cameraRef = useRef(CameraComponent);
 
-  const grantCameraPermission = async () => {
-    const cameraPermission = await Camera.getCameraPermissionStatus();
-    console.log(cameraPermission, 'cameraPermission');
+  const takePhotoOptions = {
+    photoCodec: 'jpeg',
+    qualityPrioritization: 'speed',
+    quality: 70,
+    skipMetadata: true,
+  };
+
+  const getCameraPermission = async () => {
+    await CameraComponent.getCameraPermissionStatus();
+    await CameraComponent.requestCameraPermission();
   };
 
   useEffect(() => {
-    grantCameraPermission();
+    getCameraPermission();
   }, []);
 
   const handlePokemonName = text => {
     setPokemonName(text);
+  };
+
+  const takePhoto = async () => {
+    setLoading(true);
+    try {
+      if (cameraRef.current == null) {
+        console.log('erro taking photo');
+      }
+      console.log('Photo taking ....');
+      const photo = await cameraRef.current.takePhoto(takePhotoOptions);
+      console.log(photo);
+      setImage(photo.path);
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(false);
   };
 
   return (
@@ -55,8 +89,48 @@ const CatchPokemon = props => {
           <View style={styles.noCamera}>
             <Text>No camera found!</Text>
           </View>
+        ) : image ? (
+          <View style={styles.cameraFrame}>
+            <Image
+              source={{
+                uri: `file://${image}`,
+              }}
+              style={styles.image}
+            />
+            <View style={styles.buttonPosition}>
+              <Pressable onPress={() => setImage(null)}>
+                <Image source={require('../assets/images/catch.png')} />
+              </Pressable>
+            </View>
+          </View>
         ) : (
-          <Camera style={styles.camera} device={device} isActive={true} />
+          <>
+            <View style={styles.cameraFrame}>
+              <CameraComponent
+                style={styles.camera}
+                device={device}
+                ref={cameraRef}
+                photo={true}
+                isActive={true}
+              />
+            </View>
+            <View style={styles.buttonPosition}>
+              <Pressable onPress={() => takePhoto()}>
+                <Image source={require('../assets/images/catch.png')} />
+              </Pressable>
+              <Pressable
+                style={styles.switchBtnPosition}
+                // disabled={!isActive}
+                onPress={() => {
+                  camView === 'back' ? setCamView('front') : setCamView('back');
+                }}>
+                <Image
+                  style={styles.switchBtn}
+                  source={require('../assets/images/turnCamera.png')}
+                />
+              </Pressable>
+            </View>
+          </>
         )}
       </View>
     </ScrollView>
@@ -101,14 +175,47 @@ const styles = StyleSheet.create({
   label: {
     color: '#000',
   },
+  cameraFrame: {
+    width: '90%',
+    height: 400,
+    marginHorizontal: 20,
+    overflow: 'hidden',
+    borderRadius: 20,
+  },
   camera: {
     width: '100%',
-    height: 600,
+    height: 400,
   },
   noCamera: {
     flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonPosition: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  button: {
+    height: 60,
+    width: 60,
+  },
+  image: {
+    width: '100%',
+    height: 500,
+  },
+  switchBtnPosition: {
+    position: 'absolute',
+    bottom: 20,
+    right: 45,
+  },
+  switchBtn: {
+    width: 40,
+    height: 40,
   },
 });
