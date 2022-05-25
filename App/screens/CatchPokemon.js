@@ -9,95 +9,76 @@ import {
   Pressable,
   Button,
 } from 'react-native';
-import {
-  Camera as CameraComponent,
-  useCameraDevices,
-} from 'react-native-vision-camera';
 
-import Map from './Map';
+import CustomCamera from '../components/Camera';
+import Map from '../components/Map';
 
-// import RNLocation from 'react-native-location';
+import RNLocation from 'react-native-location';
 
-const CatchPokemon = props => {
+const CatchPokemon = ({onAddPokemon}) => {
   const [pokemonName, setPokemonName] = useState('');
-  const [camView, setCamView] = useState('front');
-
-  const [image, setImage] = useState(null);
   const [location, setLocation] = useState(null);
+  const [image, setImage] = useState(null);
 
-  const devices = useCameraDevices();
-  const device = camView === 'back' ? devices.back : devices.front;
-  const cameraRef = useRef(CameraComponent);
+  const permissionHandle = async () => {
+    let permission = await RNLocation.checkPermission({
+      ios: 'whenInUse',
+      android: {
+        detail: 'coarse',
+      },
+    });
+    permission = await RNLocation.requestPermission({
+      ios: 'whenInUse',
+      android: {
+        detail: 'coarse',
+        rationale: {
+          title: 'Title 1',
+          message: 'Message 1',
+          buttonPositive: 'Ok 1',
+          buttonNegative: 'Cancel 1',
+        },
+      },
+    });
 
-  const takePhotoOptions = {
-    photoCodec: 'jpeg',
-    qualityPrioritization: 'speed',
-    quality: 70,
-    skipMetadata: true,
+    if (!permission) {
+      permission = await RNLocation.requestPermission({
+        ios: 'whenInUse',
+        android: {
+          detail: 'coarse',
+          rationale: {
+            title: 'Title 2',
+            message: 'Message 2',
+            buttonPositive: 'OK 2',
+            buttonNegative: 'Cancel 2',
+          },
+        },
+      });
+      setLocation(await RNLocation.getLatestLocation({timeout: 100}));
+    } else {
+      setLocation(await RNLocation.getLatestLocation({timeout: 100}));
+    }
   };
-
-  const getCameraPermission = async () => {
-    await CameraComponent.getCameraPermissionStatus();
-    await CameraComponent.requestCameraPermission();
-  };
-
-  // const permissionHandle = async () => {
-  //   let permission = await RNLocation.checkPermission({
-  //     ios: 'whenInUse',
-  //     android: {
-  //       detail: 'coarse',
-  //     },
-  //   });
-  //   permission = await RNLocation.requestPermission({
-  //     ios: 'whenInUse',
-  //     android: {
-  //       detail: 'coarse',
-  //       rationale: {
-  //         title: 'Title 1',
-  //         message: 'Message 1',
-  //         buttonPositive: 'Ok 1',
-  //         buttonNegative: 'Cancel 1',
-  //       },
-  //     },
-  //   });
-
-  //   if (!permission) {
-  //     permission = await RNLocation.requestPermission({
-  //       ios: 'whenInUse',
-  //       android: {
-  //         detail: 'coarse',
-  //         rationale: {
-  //           title: 'Title 2',
-  //           message: 'Message 2',
-  //           buttonPositive: 'OK 2',
-  //           buttonNegative: 'Cancel 2',
-  //         },
-  //       },
-  //     });
-  //     setLocation(await RNLocation.getLatestLocation({timeout: 100}));
-  //   } else {
-  //     setLocation(await RNLocation.getLatestLocation({timeout: 100}));
-  //   }
-  // };
-
-  useEffect(() => {
-    getCameraPermission();
-  }, []);
 
   const handlePokemonName = text => {
     setPokemonName(text);
   };
 
-  const takePhoto = async () => {
-    try {
-      if (cameraRef.current == null) {
-        console.log('Error taking photo');
-      }
-      const photo = await cameraRef.current.takePhoto(takePhotoOptions);
-      setImage(photo.path);
-    } catch (error) {
-      console.log(error);
+  const handleSavePokemon = () => {
+    if (!pokemonName || !location) {
+      return null;
     }
+
+    const pokemon = {
+      name: pokemonName,
+      location: {latitude: location.latitude, longitude: location.longitude},
+      image: image,
+    };
+    onAddPokemon(pokemon);
+  };
+
+  const handlePlacePhoto = url => {
+    console.log(url, 'url');
+    setImage(url);
   };
 
   return (
@@ -122,65 +103,20 @@ const CatchPokemon = props => {
           value={pokemonName}
         />
       </View>
-      <View>
-        {device == null ? (
-          <View style={styles.noCamera}>
-            <Text>No camera found!</Text>
-          </View>
-        ) : image ? (
-          <View style={styles.cameraFrame}>
-            <Image
-              source={{
-                uri: `file://${image}`,
-              }}
-              style={styles.image}
-            />
-            <View style={styles.buttonPosition}>
-              <Pressable onPress={() => setImage(null)}>
-                <Image source={require('../assets/images/catch.png')} />
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <>
-            <View style={styles.cameraFrame}>
-              <CameraComponent
-                style={styles.camera}
-                device={device}
-                ref={cameraRef}
-                photo={true}
-                isActive={true}
-              />
-            </View>
-            <View style={styles.buttonPosition}>
-              <Pressable onPress={() => takePhoto()}>
-                <Image source={require('../assets/images/catch.png')} />
-              </Pressable>
-              <Pressable
-                style={styles.switchBtnPosition}
-                // disabled={!isActive}
-                onPress={() => {
-                  camView === 'back' ? setCamView('front') : setCamView('back');
-                }}>
-                <Image
-                  style={styles.switchBtn}
-                  source={require('../assets/images/turnCamera.png')}
-                />
-              </Pressable>
-            </View>
-          </>
-        )}
+      <CustomCamera
+        onPlacePhoto={handlePlacePhoto}
+        onGetLocation={permissionHandle}
+      />
+      <Map location={location} />
+      <View style={styles.saveContainer}>
+        <Pressable style={styles.saveButton} onPress={handleSavePokemon}>
+          <Text style={styles.saveText}>Save it to Pokedex</Text>
+          <Image
+            style={styles.saveIcon}
+            source={require('../assets/images/pokedex.png')}
+          />
+        </Pressable>
       </View>
-
-      <View style={styles.geolocation}>
-        <Button
-          title="Get Location"
-          // onPress={() => permissionHandle()}
-        />
-        <Text>Latitude: {location?.latitude}</Text>
-        <Text>Longitude: {location?.longitude}</Text>
-      </View>
-      <Map />
     </ScrollView>
   );
 };
@@ -223,52 +159,34 @@ const styles = StyleSheet.create({
   label: {
     color: '#000',
   },
-  cameraFrame: {
-    width: '90%',
-    height: 400,
-    marginHorizontal: 20,
-    overflow: 'hidden',
-    borderRadius: 20,
-  },
-  camera: {
-    width: '100%',
-    height: 400,
-  },
-  noCamera: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonPosition: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  button: {
-    height: 60,
-    width: 60,
-  },
-  image: {
-    width: '100%',
-    height: 500,
-  },
-  switchBtnPosition: {
-    position: 'absolute',
-    bottom: 20,
-    right: 45,
-  },
-  switchBtn: {
-    width: 40,
-    height: 40,
-  },
   geolocation: {
     marginTop: 20,
     marginHorizontal: 50,
     marginBottom: 20,
+  },
+  saveContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  saveButton: {
+    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#d5d5d5',
+    borderWidth: 2,
+  },
+  saveText: {
+    color: '#000',
+    fontSize: 20,
+  },
+  saveIcon: {
+    width: 40,
+    height: 40,
+    marginLeft: 10,
   },
 });

@@ -14,7 +14,7 @@ const PokemonList = ({pokemons}) => {
     <FlatList
       data={pokemons}
       keyExtractor={item => item.id}
-      renderItem={({item}) => <Pokemon place={item} />}
+      renderItem={({item}) => <Pokemon pokemon={item} />}
     />
   );
 };
